@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anma Kartı</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f4f4;
+    padding:15px;
+    text-align:center;
+}
+
+#card{
+    width:400px;
+    max-width:90vw;
+    background:white;
+    margin:auto;
+    position:relative;
+    padding:30px;
+    box-sizing:border-box;
+    border:2px solid #ccc;
+    border-radius:15px;
+}
+
+.name{
+    font-size:24px;
+    font-weight:bold;
+}
+
+.relative{
+    font-size:18px;
+    margin-top:10px;
+}
+
+.message{
+    position:absolute;
+    bottom:120px;
+    left:0;
+    right:0;
+    text-align:center;
+    font-size:16px;
+}
+
+.footer{
+    position:absolute;
+    bottom:20px;
+    left:0;
+    right:0;
+    text-align:center;
+}
+
+.phone{
+    font-size:16px;
+    margin-top:10px;
+}
+
+button{
+    margin-top:15px;
+    padding:10px 16px;
+    font-size:14px;
+    border:none;
+    background:black;
+    color:white;
+    cursor:pointer;
+    border-radius:5px;
+}
+</style>
+</head>
+
+<body>
+
+<h3>Veri Girişi</h3>
+
+<input type="text" id="ad" placeholder="Ad Soyad (Örnek: Mehmet Yılmaz)"><br><br>
+<input type="text" id="yakin" placeholder="Yakınlık (Örnek: Babası Ahmet Yılmaz)"><br><br>
+<input type="text" id="telefon" placeholder="Telefon (Örnek: 05056986727)"><br><br>
+
+<button onclick="generateCard()">Kart Oluştur</button>
+<button onclick="saveImage()">PNG Kaydet</button>
+<button onclick="saveContact()">Rehbere Kaydet</button>
+
+<br><br>
+
+<div id="card">
+    <div class="name" id="card-name"></div>
+    <div class="relative" id="card-relative"></div>
+
+    <div class="message">
+        Allah’tan rahmet,<br>
+        ailesine ve tüm yakınlarına başsağlığı dilerim.
+    </div>
+
+    <div class="footer">
+        <div class="phone" id="card-phone"></div>
+        <div id="qr-code" style="margin-top:10px;"></div>
+    </div>
+</div>
+
+<script>
+let currentPhoneRaw = "";
+
+function generateCard(){
+    const ad = document.getElementById("ad").value.trim();
+    const yakin = document.getElementById("yakin").value.trim();
+    let telefon = document.getElementById("telefon").value.replace(/\D/g,'');
+
+    document.getElementById("card-name").innerText = ad;
+    document.getElementById("card-relative").innerText = yakin;
+
+    if(telefon.length === 11 && telefon.startsWith("0")){
+        currentPhoneRaw = telefon;
+
+        const formatted = telefon.substring(0,4)+" "+telefon.substring(4,7)+" "+telefon.substring(7,9)+" "+telefon.substring(9,11);
+        document.getElementById("card-phone").innerText = formatted;
+
+        const waNumber = "90" + telefon.substring(1);
+        const waLink = "https://wa.me/" + waNumber;
+
+        document.getElementById("qr-code").innerHTML = "";
+        new QRCode(document.getElementById("qr-code"), {
+            text: waLink,
+            width: 120,
+            height: 120
+        });
+    } else {
+        document.getElementById("card-phone").innerText = "";
+        document.getElementById("qr-code").innerHTML = "";
+        currentPhoneRaw = "";
+    }
+}
+
+function saveImage(){
+    html2canvas(document.getElementById("card")).then(canvas=>{
+        const link = document.createElement("a");
+        link.download = "anma-karti.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    });
+}
+
+function saveContact(){
+    if(!currentPhoneRaw) {
+        alert("Önce geçerli bir telefon girin ve kart oluşturun!");
+        return;
+    }
+
+    const formattedName = document.getElementById("ad").value.trim();
+    const vcard = 
+`BEGIN:VCARD
+VERSION:3.0
+FN:${formattedName}
+TEL;TYPE=CELL:${currentPhoneRaw}
+END:VCARD`;
+
+    const blob = new Blob([vcard], {type:"text/vcard"});
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = formattedName + ".vcf";
+    link.click();
+}
+</script>
+
+</body>
+</html>
